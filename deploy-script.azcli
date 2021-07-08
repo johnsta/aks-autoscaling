@@ -47,6 +47,8 @@ az acr repository show-tags --name $ACR --repository azure-vote-front --output t
 # Attach ACR to AKS
 az aks update -n $AKS -g $RG --attach-acr $ACR
 
+# Enable Container Insights: https://docs.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-onboard
+az aks enable-addons -a monitoring -n $AKS -g $RG
 
 ##############################################################
 # K8S APP DEPLOYMENT
