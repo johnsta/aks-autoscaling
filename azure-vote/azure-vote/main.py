@@ -30,13 +30,21 @@ redis_server = os.environ['REDIS']
 
 # Redis Connection
 try:
-    if "REDIS_PWD" in os.environ:
-        r = redis.StrictRedis(host=redis_server,
-                        port=6379,
-                        password=os.environ['REDIS_PWD'])
-    else:
-        r = redis.Redis(redis_server)
+    # This code if connecting to containerized redis
+    # if "REDIS_PWD" in os.environ:
+    #     r = redis.StrictRedis(host=redis_server,
+    #                     port=6379,
+    #                     password=os.environ['REDIS_PWD'])
+    # else:
+    #     r = redis.Redis(redis_server)
+    
+    # This code if connecting to Azure Redis Cache
+    # r = redis.StrictRedis(host=myHostname, port=6380, password=myPassword, ssl=True)
+    myHostname = app.config['REDISHOSTNAME']
+    myPassword = app.config['REDISPASSWORD']
+    r = redis.StrictRedis(host=myHostname, port=6379, password=myPassword)
     r.ping()
+    
 except redis.ConnectionError:
     exit('Failed to connect to Redis, terminating.')
 
