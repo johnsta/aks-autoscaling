@@ -1,0 +1,8 @@
+version: v0.1
+testName: vote
+testPlan: load/vote.jmx
+configurationFiles:
+    - 'load/*.csv'
+description: 'vote Test Run'
+engineInstances: 1
+engineSize: M

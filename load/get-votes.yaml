@@ -1,0 +1,8 @@
+version: v0.1
+testName: get-votes
+testPlan: load/get-votes.jmx
+configurationFiles:
+    - 'load/*.csv'
+description: 'get-votes Test Run'
+engineInstances: 1
+engineSize: M

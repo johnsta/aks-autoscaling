@@ -1,0 +1,101 @@
+##############################################################
+# Environment variables - set these for your subscription
+RG=autoscale
+LOC=eastus
+ACR=autoscaleacr
+AKS=autoscaleaks
+ACRSERVER=autoscaleacr.azurecr.io
+REDISNAME=autoscaleredis
+
+##############################################################
+# AKS CLUSTER CREATION
+az group create --name $RG --location $LOC
+az aks create \
+    --resource-group $RG \
+    --name $AKS \
+    --node-count 2 \
+    --generate-ssh-keys \
+    --attach-acr $ACR
+
+# Install kubectl and connect to AKS cluster
+sudo az aks install-cli
+az aks get-credentials --resource-group $RG --name $AKS
+kubectl get nodes
+
+##############################################################
+# AZURE REDIS CACHE
+az redis create --location $LOC --name $REDISNAME --resource-group $RG --sku Basic --vm-size c0
+# If using Azure Redis Cache, supply hostname and password in `config_file.cfg` and uncomment lines 43-45 in `main.py`
+# App config: REDISHOSTNAME, REDISPASSWORD 
+
+##############################################################
+# AZURE CONTAINER REGISTRY 
+az acr create --resource-group $RG --name $ACR --sku Basic
+az acr login --name $ACR
+
+# Get `loginServer` name
+az acr list --resource-group $RG --query "[].{acrLoginServer:loginServer}" --output table
+
+# Build, tag, and push application's Docker images
+docker-compose up --build
+docker tag mcr.microsoft.com/azuredocs/azure-vote-front:v2 $ACRSERVER/azure-vote-front:v2
+docker push $ACRSERVER/azure-vote-front:v2
+
+az acr repository list --name $ACR --output table
+az acr repository show-tags --name $ACR --repository azure-vote-front --output table
+
+# Attach ACR to AKS
+az aks update -n $AKS -g $RG --attach-acr $ACR
+
+
+##############################################################
+# K8S APP DEPLOYMENT
+# Option 1: Deploy web frontend and backend Redis as k8s pods
+# kubectl apply -f azure-vote-all-in-one-redis.yaml
+
+# Option 2: Deploy only web frontend in k8s (requires Azure Redis Cache)
+kubectl apply -f azure-vote-frontend-only.yaml
+kubectl get service azure-vote-front --watch
+kubectl get pods --watch
+
+
+##############################################################
+# CURL COMMANDS FOR TEST APPLICATION
+# Get external IP for app's frontend
+kubectl get service azure-vote-front -o json | grep ip
+APPURL='http://20.81.31.21/' # from preceding command
+
+# Vote DOGS
+curl -X POST -F 'vote=Dogs' $APPURL
+
+# Vote CATS
+curl -X POST -F 'vote=Cats' $APPURL
+
+# Get votes
+curl $APPURL
+
+
+##############################################################
+# AKS MANUAL SCALE
+
+# Manually scale frontend pods
+kubectl scale --replicas=5 deployment/azure-vote-front
+
+# Apply basic auto-scale rule for frontend pods
+kubectl autoscale deployment azure-vote-front --cpu-percent=50 --min=1 --max=10
+
+# Manually scale cluster nodes
+az aks scale --resource-group $RG --name $AKS --node-count 3
+
+
+##############################################################
+# AKS AUTO-SCALE
+
+# Apply/update policy for pod auto-scaling
+kubectl apply -f azure-vote-hpa.yaml
+
+# Watch pod auto-scaling status
+kubectl get hpa --watch
+
+# Get AKS node status
+kubectl get nodes --watch
