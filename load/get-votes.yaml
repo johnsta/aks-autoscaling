@@ -1,8 +1,8 @@
 version: v0.1
-testName: get-votes
+testName: Vote-App
 testPlan: load/get-votes.jmx
 configurationFiles:
     - 'load/*.csv'
-description: 'get-votes Test Run'
-engineInstances: 1
+description: 'Min cluster nodes = 5, pod autoscaling (min 20, max 100)'
+engineInstances: 2
 engineSize: M
