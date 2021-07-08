@@ -6,5 +6,5 @@ Note: 'deploy-script.azcli` was authored to *manually* run commands (sometimes, 
 # Verify autoscale
 1. Edit `minReplicas` and `maxReplicas` in [azure-vote-hpa.yaml](azure-vote-hpa.yaml).
 2. Apply changes to AKS cluster configuration: `kubectl apply -f azure-vote-hpa.yaml`
-3. Watch auto-scaling status: `kubectl get hpa --watch`
-4. Run JMeter test: [get-votes.jmx](load/get-votes.jmx)
+3. Run JMeter test: [get-votes.jmx](load/get-votes.jmx)
+4. Watch auto-scaling status: `kubectl get hpa --watch`
